@@ -1,8 +1,7 @@
-import {Entity,PrimaryGeneratedColumn,Column,CreateDateColumn,UpdateDateColumn,ManyToOne,OneToMany,JoinColumn,} from "typeorm";
-import { Category } from "../Entities/Categories";
+import {Entity,PrimaryGeneratedColumn,Column,CreateDateColumn,UpdateDateColumn,ManyToOne,ManyToMany,JoinColumn,JoinTable,} from "typeorm";
 import { Author } from "../Entities/Authors";
-import { Video } from "../Entities/Videos";
 import { User } from "../Entities/Users";
+import { Media } from "../Entities/Media";
 
 export enum ArticleStatus {
   DRAFT = "DRAFT",
@@ -114,13 +113,7 @@ export class Article {
   viewCount: number;
 
   // ── Relations ──
-  @ManyToOne(() => Category, (category) => category.articles, {
-    nullable: true,
-    onDelete: "SET NULL",
-  })
-  @JoinColumn({ name: "categoryId" })
-  category: Category;
-
+  
   @Column({ type: "varchar", nullable: true })
   categoryId: string;
 
@@ -141,8 +134,18 @@ export class Article {
   @Column({ type: "varchar", nullable: true })
   createdById: string;
 
-  @OneToMany(() => Video, (video) => video.article)
-  videos: Video[];
+  
+  @ManyToMany(() => Media, (media) => media.articles)
+  @JoinTable()
+  media: Media[];
+
+  
+  @Column({ type: "varchar", nullable: true })
+  coverMediaId: string;
+
+  @ManyToOne(() => Media, { nullable: true, onDelete: "SET NULL" })
+  @JoinColumn({ name: "coverMediaId" })
+  coverMedia: Media;
 
   @CreateDateColumn()
   createdAt: Date;

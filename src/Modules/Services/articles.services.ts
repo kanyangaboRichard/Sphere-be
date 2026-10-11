@@ -1,6 +1,8 @@
 import { AppDataSource } from "../../Config/database";
 import { Article, ArticleStatus } from "../../Entities/Articles";
 import { AuditLog, AuditAction, AuditEntity } from "../../Entities/Auditlog";
+import { Media } from "../../Entities/Media";
+import { In } from "typeorm";
 
 const articleRepo = () => AppDataSource.getRepository(Article);
 const auditRepo = () => AppDataSource.getRepository(AuditLog);
@@ -12,9 +14,15 @@ const generateSlug = (title: string) =>
 export class ArticleService {
 
   // ── Create ──
-  async create(data: Partial<Article>, userId?: string) {
+  async create(data: Partial<Article> & { galleryMediaIds?: string[] }, userId?: string) {
+    const { galleryMediaIds, ...articleData } = data;
     const slug = generateSlug(data.title!);
-    const article = articleRepo().create({ ...data, slug });
+    const article = articleRepo().create({ ...articleData, slug });
+
+    if (galleryMediaIds && galleryMediaIds.length > 0) {
+      article.media = await AppDataSource.getRepository(Media).findBy({ id: In(galleryMediaIds) });
+    }
+
     await articleRepo().save(article);
 
     await auditRepo().save(auditRepo().create({
@@ -45,7 +53,6 @@ export class ArticleService {
 
     const qb = articleRepo()
       .createQueryBuilder("article")
-      .leftJoinAndSelect("article.category", "category")
       .leftJoinAndSelect("article.author", "author")
       .orderBy("article.createdAt", "DESC")
       .skip(skip)
@@ -73,7 +80,7 @@ export class ArticleService {
   async getOne(id: string) {
     const article = await articleRepo().findOne({
       where: { id },
-      relations: { category: true, author: true, videos: true, createdBy: true }
+      relations: { author: true, media: true, coverMedia: true, createdBy: true }
     });
     if (!article) throw new Error("Article not found");
 
@@ -87,19 +94,27 @@ export class ArticleService {
   async getBySlug(slug: string) {
     const article = await articleRepo().findOne({
       where: { slug },
-      relations: { category: true, author: true, videos: true },
+      relations: { author: true, media: true, coverMedia: true },
     });
     if (!article) throw new Error("Article not found");
     return article;
   }
 
   // ── Update ──
-  async update(id: string, data: Partial<Article>, userId?: string) {
-    const article = await articleRepo().findOne({ where: { id } });
+  async update(id: string, data: Partial<Article> & { galleryMediaIds?: string[] }, userId?: string) {
+    const article = await articleRepo().findOne({ where: { id }, relations: { media: true } });
     if (!article) throw new Error("Article not found");
 
+    const { galleryMediaIds, ...articleData } = data;
     const previous = { ...article };
-    Object.assign(article, data);
+    Object.assign(article, articleData);
+
+    if (galleryMediaIds !== undefined) {
+      article.media = galleryMediaIds.length > 0
+        ? await AppDataSource.getRepository(Media).findBy({ id: In(galleryMediaIds) })
+        : [];
+    }
+
     await articleRepo().save(article);
 
     await auditRepo().save(auditRepo().create({
@@ -215,5 +230,44 @@ export class ArticleService {
     const inReview = await articleRepo().count({ where: { status: ArticleStatus.IN_REVIEW } });
 
     return { total, published, draft, scheduled, inReview };
+  }
+  // ── Public methods for frontend website ──
+  async getPublicAll(query: {
+    categoryId?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  } = {}) {
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const qb = articleRepo()
+      .createQueryBuilder("article")
+      .leftJoinAndSelect("article.author", "author")
+      .leftJoinAndSelect("article.coverMedia", "coverMedia")
+      .where("article.status = :status", { status: ArticleStatus.PUBLISHED })
+      .orderBy("article.publishedAt", "DESC")
+      .skip(skip)
+      .take(limit);
+
+    if (query.categoryId) qb.andWhere("article.categoryId = :categoryId", { categoryId: query.categoryId });
+    if (query.search) qb.andWhere("article.title ILIKE :search", { search: `%${query.search}%` });
+
+    const [articles, total] = await qb.getManyAndCount();
+
+    return { articles, total, page, limit, totalPages: Math.ceil(total / limit) };
+  }
+
+  async getPublicBySlug(slug: string) {
+    const article = await articleRepo().findOne({
+      where: { slug, status: ArticleStatus.PUBLISHED },
+      relations: { author: true, media: true, coverMedia: true },
+    });
+    if (!article) throw new Error("Article not found");
+
+    await articleRepo().update(article.id, { viewCount: article.viewCount + 1 });
+
+    return article;
   }
 }

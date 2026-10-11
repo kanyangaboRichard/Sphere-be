@@ -11,7 +11,7 @@ AppDataSource.initialize()
   .then(() => {
     console.log("Database connected — sphere_tech_cms");
     app.listen(PORT, () => {
-      console.log(`Sphere Tech API running on http://localhost:${PORT}`);
+      console.log(`Sphere Tech API running on http://127.0.0.1:${PORT}`);
     });
   })
   .catch((error: any) => {
