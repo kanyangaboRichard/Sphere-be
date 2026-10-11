@@ -24,10 +24,23 @@ export enum ArticleThemePreset {
   CYBER = "CYBER",
 }
 
+export enum ArticleType {
+  ARTICLE = "ARTICLE",
+  VIDEO = "VIDEO",
+  NEWS = "NEWS",
+}
+
 @Entity("articles")
 export class Article {
   @PrimaryGeneratedColumn("uuid")
   id: string;
+
+  @Column({
+    type: "enum",
+    enum: ArticleType,
+    default: ArticleType.ARTICLE,
+  })
+  type: ArticleType;
 
   @Column({ type: "varchar" })
   title: string;
@@ -36,7 +49,7 @@ export class Article {
   slug: string;
 
   @Column({ type: "text", nullable: true })
-  excerpt: string;
+  excerpt: string | null;
 
   @Column({ type: "text", nullable: true })
   body: string;
@@ -88,7 +101,7 @@ export class Article {
   themeGridOverlay: boolean;
 
   @Column({ type: "varchar", nullable: true })
-  pullQuote: string;
+  pullQuote: string | null;
 
   // ── Meta ──
   @Column({ type: "int", default: 0 })
@@ -104,7 +117,7 @@ export class Article {
   tags: string[];
 
   @Column({ type: "timestamp", nullable: true })
-  publishedAt: Date;
+  publishedAt: Date | null;
 
   @Column({ type: "timestamp", nullable: true })
   scheduledAt: Date;
@@ -113,9 +126,8 @@ export class Article {
   viewCount: number;
 
   // ── Relations ──
-  
   @Column({ type: "varchar", nullable: true })
-  categoryId: string;
+  categoryId: string | null;
 
   @ManyToOne(() => Author, (author) => author.articles, {
     nullable: true,
@@ -124,24 +136,22 @@ export class Article {
   @JoinColumn({ name: "authorId" })
   author: Author;
 
-  @Column({ type: "varchar", nullable: true })
-  authorId: string;
+  @Column({ type: "uuid", nullable: true })
+  authorId: string | null;
 
   @ManyToOne(() => User, { nullable: true, onDelete: "SET NULL" })
   @JoinColumn({ name: "createdById" })
   createdBy: User;
 
-  @Column({ type: "varchar", nullable: true })
-  createdById: string;
+  @Column({ type: "uuid", nullable: true })
+  createdById: string | null;
 
-  
   @ManyToMany(() => Media, (media) => media.articles)
   @JoinTable()
   media: Media[];
 
-  
-  @Column({ type: "varchar", nullable: true })
-  coverMediaId: string;
+  @Column({ type: "uuid", nullable: true })
+  coverMediaId: string | null;
 
   @ManyToOne(() => Media, { nullable: true, onDelete: "SET NULL" })
   @JoinColumn({ name: "coverMediaId" })
