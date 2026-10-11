@@ -2,11 +2,11 @@ import { DataSource } from "typeorm";
 import dotenv from "dotenv";
 import { User } from "../Entities/Users";
 import { Article } from "../Entities/Articles";
-import { Category } from "../Entities/Categories";
 import { Author } from "../Entities/Authors";
-import { Video } from "../Entities/Videos";
 import { SiteSettings } from "../Entities/SiteSettings";
 import { AuditLog } from "../Entities/Auditlog";
+import { Media } from "../Entities/Media";
+import { Categories } from "../Entities/Categories";
 
 dotenv.config();
 
@@ -19,9 +19,9 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
 
   
-  synchronize: true,
+  synchronize: false,
   logging: false,
-  entities: [User, Article, Category, Author, Video, SiteSettings, AuditLog],
-  migrations: [],
+  entities: [User, Article, Author, SiteSettings, AuditLog, Media, Categories],
+  migrations: ["src/migrations/*.ts"],
   subscribers: [],
 });

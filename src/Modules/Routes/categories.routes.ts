@@ -1,21 +1,31 @@
 import { Router } from "express";
-import { CategoryController } from "../../Modules/Controllers/categories.controller";
-import { authenticate, authorize } from "../../middleware/auth.middleware";
-import { UserRole } from "../../Entities/Users";
+import { CategoryService } from "../Services/categories.services"; 
 
 const router = Router();
-const categoryController = new CategoryController();
+const categoryService = new CategoryService();
 
-// Public
-router.get("/", (req, res) => categoryController.getAll(req, res));
-router.get("/slug/:slug", (req, res) => categoryController.getBySlug(req, res));
-router.get("/:id", (req, res) => categoryController.getOne(req, res));
+router.get("/", async (req, res) => {
+  try {
+    const categories = await categoryService.getAll();
+    res.json({ data: categories });
+  } catch (err) {
+    console.error("Get categories error:", err);
+    res.status(500).json({ message: "Failed to fetch categories" });
+  }
+});
 
-// Protected
-router.post("/", authenticate, authorize(UserRole.SUPER_ADMIN, UserRole.ADMIN), (req, res) => categoryController.create(req, res));
-router.put("/:id", authenticate, authorize(UserRole.SUPER_ADMIN, UserRole.ADMIN), (req, res) => categoryController.update(req, res));
-router.delete("/:id", authenticate, authorize(UserRole.SUPER_ADMIN), (req, res) => categoryController.delete(req, res));
-router.patch("/:id/toggle-status", authenticate, authorize(UserRole.SUPER_ADMIN, UserRole.ADMIN), (req, res) => categoryController.toggleStatus(req, res));
-router.patch("/reorder", authenticate, authorize(UserRole.SUPER_ADMIN, UserRole.ADMIN), (req, res) => categoryController.reorder(req, res));
+router.post("/", async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: "Category name is required" });
+    }
+    const category = await categoryService.create(name);
+    res.status(201).json({ data: category });
+  } catch (err) {
+    console.error("Create category error:", err);
+    res.status(500).json({ message: "Failed to create category" });
+  }
+});
 
 export default router;
