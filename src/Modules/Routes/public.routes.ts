@@ -5,7 +5,7 @@ const router = Router();
 const articleService = new ArticleService();
 
 
-router.get("/public/articles", async (req, res) => {
+router.get("/articles", async (req, res) => {
   try {
     const { categoryId, search, page, limit } = req.query;
     const result = await articleService.getPublicAll({
@@ -20,7 +20,7 @@ router.get("/public/articles", async (req, res) => {
   }
 });
 
-router.get("/public/articles/:slug", async (req, res) => {
+router.get("/articles/:slug", async (req, res) => {
   try {
     const article = await articleService.getPublicBySlug(req.params.slug);
     res.json({ data: article });
