@@ -1,24 +1,27 @@
-import {S3Client,PutObjectCommand,DeleteObjectCommand,DeleteObjectsCommand,} from "@aws-sdk/client-s3";
+import {S3Client,PutObjectCommand,DeleteObjectCommand,DeleteObjectsCommand,HeadBucketCommand,CreateBucketCommand,PutBucketPolicyCommand,} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
 
-export class S3Service {
-  private client: S3Client;
-  private bucket = process.env.S3_BUCKET as string;
-  private publicBaseUrl = process.env.S3_PUBLIC_BASE_URL as string;
+function makeClient(endpoint?: string) {
+  return new S3Client({
+    region: process.env.S3_REGION,
+    endpoint: endpoint || undefined,
+    forcePathStyle: !!endpoint,
+    credentials: {
+      accessKeyId: process.env.S3_ACCESS_KEY_ID as string,
+      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY as string,
+    },
+  });
+}
 
-  constructor() {
-    this.client = new S3Client({
-      region: process.env.S3_REGION,
-      // Leave S3_ENDPOINT unset for real AWS S3; set it for R2/Spaces/MinIO
-      endpoint: process.env.S3_ENDPOINT || undefined,
-      forcePathStyle: !!process.env.S3_ENDPOINT,
-      credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY_ID as string,
-        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY as string,
-      },
-    });
-  }
+export class S3Service {
+  private bucket = process.env.S3_BUCKET as string;
+  private publicBaseUrl = (process.env.S3_PUBLIC_BASE_URL || "").replace(/\/$/, "");
+
+  private client = makeClient(process.env.S3_ENDPOINT);
+
+  
+  private signer = makeClient(process.env.S3_PUBLIC_ENDPOINT || process.env.S3_ENDPOINT);
 
   buildKey(originalFilename: string): string {
     const ext = originalFilename.split(".").pop();
@@ -27,12 +30,8 @@ export class S3Service {
   }
 
   async getPresignedUploadUrl(key: string, contentType: string): Promise<string> {
-    const command = new PutObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-      ContentType: contentType,
-    });
-    return getSignedUrl(this.client, command, { expiresIn: 300 });
+    const command = new PutObjectCommand({ Bucket: this.bucket, Key: key, ContentType: contentType });
+    return getSignedUrl(this.signer, command, { expiresIn: 300 });
   }
 
   publicUrl(key: string): string {
@@ -49,6 +48,28 @@ export class S3Service {
       new DeleteObjectsCommand({
         Bucket: this.bucket,
         Delete: { Objects: keys.map(Key => ({ Key })) },
+      })
+    );
+  }
+  async ensurePublicBucket(): Promise<void> {
+    const Bucket = this.bucket;
+    try {
+      await this.client.send(new HeadBucketCommand({ Bucket }));
+    } catch {
+      await this.client.send(new CreateBucketCommand({ Bucket }));
+    }
+    await this.client.send(
+      new PutBucketPolicyCommand({
+        Bucket,
+        Policy: JSON.stringify({
+          Version: "2012-10-17",
+          Statement: [{
+            Effect: "Allow",
+            Principal: { AWS: ["*"] },
+            Action: ["s3:GetObject"],
+            Resource: [`arn:aws:s3:::${Bucket}/*`],
+          }],
+        }),
       })
     );
   }
