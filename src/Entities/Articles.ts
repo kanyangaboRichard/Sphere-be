@@ -2,6 +2,7 @@ import {Entity,PrimaryGeneratedColumn,Column,CreateDateColumn,UpdateDateColumn,M
 import { Author } from "../Entities/Authors";
 import { User } from "../Entities/Users";
 import { Media } from "../Entities/Media";
+import { Categories } from "../Entities/Categories";
 
 export enum ArticleStatus {
   DRAFT = "DRAFT",
@@ -125,9 +126,14 @@ export class Article {
   @Column({ type: "int", default: 0 })
   viewCount: number;
 
-  // ── Relations ──
-  @Column({ type: "varchar", nullable: true })
-  categoryId: string | null;
+  
+ // ── Relations ──
+@Column({ type: "uuid", nullable: true })
+categoryId: string | null;
+
+@ManyToOne(() => Categories, { nullable: true, onDelete: "SET NULL" })
+@JoinColumn({ name: "categoryId" })
+category: Categories;
 
   @ManyToOne(() => Author, (author) => author.articles, {
     nullable: true,

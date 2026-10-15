@@ -54,6 +54,7 @@ export class ArticleService {
     const qb = articleRepo()
       .createQueryBuilder("article")
       .leftJoinAndSelect("article.author", "author")
+      .leftJoinAndSelect("article.category", "category")
       .orderBy("article.createdAt", "DESC")
       .skip(skip)
       .take(limit);
@@ -80,7 +81,7 @@ export class ArticleService {
   async getOne(id: string) {
     const article = await articleRepo().findOne({
       where: { id },
-      relations: { author: true, media: true, coverMedia: true, createdBy: true }
+      relations: { author: true, media: true, coverMedia: true, createdBy: true, category: true }
     });
     if (!article) throw new Error("Article not found");
 
@@ -94,7 +95,7 @@ export class ArticleService {
   async getBySlug(slug: string) {
     const article = await articleRepo().findOne({
       where: { slug },
-      relations: { author: true, media: true, coverMedia: true },
+      relations: { author: true, media: true, coverMedia: true, category: true },
     });
     if (!article) throw new Error("Article not found");
     return article;
@@ -246,6 +247,7 @@ export class ArticleService {
       .createQueryBuilder("article")
       .leftJoinAndSelect("article.author", "author")
       .leftJoinAndSelect("article.coverMedia", "coverMedia")
+      .leftJoinAndSelect("article.category", "category")
       .where("article.status = :status", { status: ArticleStatus.PUBLISHED })
       .orderBy("article.publishedAt", "DESC")
       .skip(skip)
@@ -262,7 +264,7 @@ export class ArticleService {
   async getPublicBySlug(slug: string) {
     const article = await articleRepo().findOne({
       where: { slug, status: ArticleStatus.PUBLISHED },
-      relations: { author: true, media: true, coverMedia: true },
+      relations: { author: true, media: true, coverMedia: true, category: true },
     });
     if (!article) throw new Error("Article not found");
 

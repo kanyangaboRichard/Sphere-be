@@ -21,6 +21,8 @@ export enum AuditEntity {
   VIDEO = "VIDEO",
   USER = "USER",
   SITE_SETTINGS = "SITE_SETTINGS",
+  SHOP_CATEGORY = "SHOP_CATEGORY",
+  SHOP_PRODUCT = "SHOP_PRODUCT",
 }
 
 @Entity("audit_logs")
