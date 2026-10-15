@@ -10,6 +10,8 @@ import auditLogRoutes from "./Modules/Routes/auditLog.routes";
 import authorRoutes from "./Modules/Routes/author.routes";
 import categoriesRoutes from "./Modules/Routes/categories.routes";
 import publicRoutes from "./Modules/Routes/public.routes";
+import shopCategoriesRoutes from "./Modules/Routes/shopCategories.routes"; 
+import shopProductsRoutes from "./Modules/Routes/shopProducts.routes";
 
 declare module "express";
 declare module "cors";
@@ -31,6 +33,8 @@ app.use("/api/audit-logs", auditLogRoutes);
 app.use("/api/media", mediaRoutes);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/public", publicRoutes);
+app.use("/api/shop-categories", shopCategoriesRoutes);
+app.use("/api/shop-products", shopProductsRoutes);
 
 // Health check
 app.get("/", (req, res) => {
