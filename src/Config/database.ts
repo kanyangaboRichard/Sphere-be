@@ -7,6 +7,8 @@ import { SiteSettings } from "../Entities/SiteSettings";
 import { AuditLog } from "../Entities/Auditlog";
 import { Media } from "../Entities/Media";
 import { Categories } from "../Entities/Categories";
+import { ShopCategory} from "../Entities/ShopCategories";
+import { ShopProduct } from "../Entities/ShopProducts";
 
 dotenv.config();
 
@@ -21,7 +23,7 @@ export const AppDataSource = new DataSource({
 
   synchronize: false,
   logging: false,
-  entities: [User, Article, Author, SiteSettings, AuditLog, Media, Categories],
+  entities: [User, Article, Author, SiteSettings, AuditLog, Media, Categories, ShopCategory, ShopProduct],
   migrations: ["src/migrations/*.ts"],
   subscribers: [],
 });
