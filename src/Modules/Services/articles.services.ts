@@ -18,6 +18,7 @@ export class ArticleService {
     const { galleryMediaIds, ...articleData } = data;
     const slug = generateSlug(data.title!);
     const article = articleRepo().create({ ...articleData, slug });
+    if (article.status === ArticleStatus.PUBLISHED && !article.publishedAt) article.publishedAt = new Date();
 
     if (galleryMediaIds && galleryMediaIds.length > 0) {
       article.media = await AppDataSource.getRepository(Media).findBy({ id: In(galleryMediaIds) });
@@ -55,6 +56,7 @@ export class ArticleService {
       .createQueryBuilder("article")
       .leftJoinAndSelect("article.author", "author")
       .leftJoinAndSelect("article.category", "category")
+      .leftJoinAndSelect("article.coverMedia", "coverMedia")
       .orderBy("article.createdAt", "DESC")
       .skip(skip)
       .take(limit);
@@ -109,6 +111,7 @@ export class ArticleService {
     const { galleryMediaIds, ...articleData } = data;
     const previous = { ...article };
     Object.assign(article, articleData);
+    if (article.status === ArticleStatus.PUBLISHED && !article.publishedAt) article.publishedAt = new Date();
 
     if (galleryMediaIds !== undefined) {
       article.media = galleryMediaIds.length > 0
