@@ -1,4 +1,4 @@
-import {Entity,PrimaryGeneratedColumn,Column,CreateDateColumn,UpdateDateColumn,OneToMany,} from "typeorm";
+import {Entity,PrimaryGeneratedColumn,Column,CreateDateColumn,UpdateDateColumn,DeleteDateColumn,OneToMany,} from "typeorm";
 import { AuditLog } from "../Entities/Auditlog";
 
 export enum UserRole {
@@ -70,4 +70,8 @@ export class User {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  // Set when the user is moved to Trash; trashed users can't log in
+  @DeleteDateColumn({ type: "timestamp", nullable: true })
+  deletedAt: Date | null;
 }

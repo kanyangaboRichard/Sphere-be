@@ -67,9 +67,9 @@ export class AuditLog {
   @JoinColumn({ name: "performedById" })
   performedBy: User;
 
-  @Column({ type: "varchar", nullable: true })
-  performedById: string;
-
+   @Column({ type: "varchar", nullable: true })
+  performedById: string | null;
+ 
   @CreateDateColumn()
   createdAt: Date;
 }
