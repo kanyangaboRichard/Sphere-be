@@ -11,7 +11,8 @@
     "typeorm": "ts-node -r reflect-metadata ./node_modules/typeorm/cli.js",
     "migration:generate": "npm run typeorm -- migration:generate -d src/Config/database.ts src/migrations/Init",
     "migration:run": "npm run typeorm -- migration:run -d src/Config/database.ts",
-    "migration:revert": "npm run typeorm -- migration:revert -d src/Config/database.ts"
+    "migration:revert": "npm run typeorm -- migration:revert -d src/Config/database.ts",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -40,6 +41,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.0.0",
     "@types/nodemailer": "^8.0.1",
+    "husky": "^9.1.7",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2"
   }
